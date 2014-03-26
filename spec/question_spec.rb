@@ -16,7 +16,7 @@ describe Question do
       qr2 = QuestionResponse.create(:survey_id => survey1.id, :question_id => question1.id, :response_id => response2.id)
       qr3 = QuestionResponse.create(:survey_id => survey1.id, :question_id => question2.id, :response_id => response3.id)
       qr4 = QuestionResponse.create(:survey_id => 47, :question_id => question2.id, :response_id => response4.id)
-      Question.get_responses(question1.id).should eq [response1.id, response2.id]
+      question1.get_responses.should eq [response1, response2]
     end
   end
 end

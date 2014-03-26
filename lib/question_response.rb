@@ -5,10 +5,17 @@ class QuestionResponse < ActiveRecord::Base
   belongs_to :question
   belongs_to :response
 
-  # def show_pair
-  #   qr_pair = []
-  #   qr_pair[0] = QuestionResponse.where(:id => self.id).joins(:question).pluck(:name).first
-  #   qr_pair << QuestionResponse.where(:id => self.id).joins(:response).pluck(:name).first
-  #   qr_pair
-  # end
+  def counter
+    ResponseSelection.where(:question_response_id => self.id).count(:id)
+  end
+
+  def percent
+    total = ResponseSelection.joins(:question_response).where('question_responses.question_id' => self.question_id).count(:id).to_f
+    count = self.counter.to_f
+    if total == 0
+      percent = 0
+    else
+      percent = ((count/total)*100).round
+    end
+  end
 end
