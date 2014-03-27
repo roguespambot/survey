@@ -5,7 +5,6 @@ require './lib/response'
 require './lib/response_selection'
 require './lib/question'
 require './lib/question_response'
-require './lib/user_response'
 
 database_configurations = YAML::load(File.open('./db/config.yml'))
 development_configuration = database_configurations['development']
@@ -55,6 +54,7 @@ def create_survey
 end
 
 def add_question(survey)
+  other = false
   mc = false
   oe = false
   puts "\n\n"
@@ -67,12 +67,17 @@ def add_question(survey)
     puts "May a survey taker provide multiple responses to this question? (Y/N)"
     print ">"
     question_multiple_choice = gets.chomp.downcase
-
-      if question_multiple_choice == 'y'
-        mc = true
-      end
-    new_question = Question.create(:name => question_name, :multiple_choice? => mc)
+    puts "May a user select 'Other' to enter their own response? (Y/N)"
+    other_response = gets.chomp.downcase
+    if question_multiple_choice == 'y'
+      mc = true
+    end
+    if other_response == 'y'
+      other = true
+    end
+    new_question = Question.create(:name => question_name, :multiple_choice? => mc, :open_ended? => oe, :other? => other)
     user_input = nil
+
     until user_input == 'n'
       new_response = add_response(new_question)
       new_question_response = QuestionResponse.create(:question_id => new_question.id, :survey_id => survey.id, :response_id => new_response.id)
@@ -148,35 +153,50 @@ def take_survey(survey)
     puts "#{question.name}"
     responses = question.get_responses
     if question.open_ended?
-      print ">"
-      response = gets.chomp
-      new_response = Response.create(:name => response)
-      new_qr = QuestionResponse.create(:question_id => question.id, :response_id => new_response.id, :survey_id => survey.id)
-      new_response_selection = ResponseSelection.create(:taker_id => survey_taker.id, :question_response_id => new_qr.id)
+      answer_open_ended(survey, question, survey_taker)
     else
       responses.each_with_index do |response, index|
         puts "#{index+1}. #{response.name}"
-          if !question.multiple_choice?
-          puts "\n\nEnter the number of the response you would like to select."
-          print ">"
-          response_num = gets.chomp.to_i
+      end
+      if question.other?
+        puts "#{responses.length+1}. Other"
+      end
+      if !question.multiple_choice?
+        puts "\n\nEnter the number of the response you would like to select."
+        print ">"
+        response_num = gets.chomp.to_i
+        if response_num == responses.length
+          answer_open_ended(survey, question, survey_taker)
+        else
           selected_response = responses[response_num-1]
           qr = QuestionResponse.find_by(:question_id => question.id, :response_id => selected_response.id, :survey_id => survey.id)
           new_response_selection = ResponseSelection.create(:taker_id => survey_taker.id, :question_response_id => qr.id)
-        else
-          puts "\n\nEnter the number(s) of the response(s) you would like to select (separate with spaces)."
-          print ">"
-          response_numbers = gets.chomp.split(" ")
-          response_numbers.each do |response|
+        end
+      else
+        puts "\n\nEnter the number(s) of the response(s) you would like to select (separate with spaces)."
+        print ">"
+        response_numbers = gets.chomp.split(" ")
+        response_numbers.each do |response|
+          if response.to_i == responses.length + 1
+            answer_open_ended(survey, question, survey_taker)
+          else
             selected_response = responses[response.to_i-1]
             qr = QuestionResponse.find_by(:question_id => question.id, :response_id => selected_response.id, :survey_id => survey.id)
-            survey_taker = Taker.create(:name => "Taker")
             new_response_selection = ResponseSelection.create(:taker_id => survey_taker.id, :question_response_id => qr.id)
           end
         end
       end
     end
   end
+end
+
+def answer_open_ended(survey, question, taker)
+  puts "Please enter your own response: "
+  print ">"
+  response = gets.chomp
+  new_response = Response.create(:name => response)
+  new_qr = QuestionResponse.create(:question_id => question.id, :response_id => new_response.id, :survey_id => survey.id)
+  new_response_selection = ResponseSelection.create(:taker_id => taker.id, :question_response_id => new_qr.id)
 end
 
 welcome

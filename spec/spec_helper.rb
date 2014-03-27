@@ -7,7 +7,6 @@ require './lib/response'
 require './lib/response_selection'
 require './lib/survey'
 require './lib/taker'
-require './lib/user_response'
 
 database_configurations = YAML::load(File.open('./db/config.yml'))
 test_configuration = database_configurations['test']
