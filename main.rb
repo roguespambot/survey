@@ -5,6 +5,7 @@ require './lib/response'
 require './lib/response_selection'
 require './lib/question'
 require './lib/question_response'
+require './lib/user_response'
 
 database_configurations = YAML::load(File.open('./db/config.yml'))
 development_configuration = database_configurations['development']
@@ -141,6 +142,8 @@ def score_survey(survey)
       qr = QuestionResponse.find_by(:question_id => question.id, :response_id => response.id, :survey_id => survey.id)
       puts "#{index+1}. #{response.name} - #{qr.counter} (#{qr.percent}%)"
     end
+    if question.other?
+      puts "#{responses.length+1}. Other - #{question.count_others} (#{question.percent_others}%)"
     puts "\n"
   end
 end
@@ -194,8 +197,8 @@ def answer_open_ended(survey, question, taker)
   puts "Please enter your own response: "
   print ">"
   response = gets.chomp
-  new_response = Response.create(:name => response)
-  new_qr = QuestionResponse.create(:question_id => question.id, :response_id => new_response.id, :survey_id => survey.id)
+  new_user_response = UserResponse.create(:name => response)
+  new_qr = QuestionResponse.create(:question_id => question.id, :user_response_id => new_response.id, :survey_id => survey.id)
   new_response_selection = ResponseSelection.create(:taker_id => taker.id, :question_response_id => new_qr.id)
 end
 

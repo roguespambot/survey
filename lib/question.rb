@@ -6,4 +6,12 @@ class Question < ActiveRecord::Base
   def get_responses
     Response.joins(question_responses: :question).where('question_responses.question_id' => self.id)
   end
+
+  def count_others
+    QuestionResponse.count(:user_response_id)
+  end
+
+  def percent_others
+
+  end
 end

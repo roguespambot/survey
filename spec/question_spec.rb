@@ -19,4 +19,14 @@ describe Question do
       question1.get_responses.should eq [response1, response2]
     end
   end
+
+  describe ".count_others" do
+    it "counts all user provided responses" do
+      question1 = Question.create(:name => "What is best in life?")
+      response1 = Response.create(:name => "To see your enemies driven before you.")
+      response2 = Response.create(:name => "Ice cream.")
+      qr1 = QuestionResponse.create(:survey_id => 201, :question_id => question1.id, :response_id => response1.id)
+      qr1.percent.should eq 0
+    end
+  end
 end

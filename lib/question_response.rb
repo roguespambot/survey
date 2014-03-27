@@ -4,6 +4,7 @@ class QuestionResponse < ActiveRecord::Base
   belongs_to :survey
   belongs_to :question
   belongs_to :response
+  belongs_to :user_response
 
   def counter
     ResponseSelection.where(:question_response_id => self.id).count(:id)
